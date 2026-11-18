@@ -14,7 +14,7 @@
 
   <!-- Header -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-    <div class="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
       <div>
         <h1 class="text-xl font-bold text-slate-900">📅 อัปเดตวันลาทีม</h1>
         <p class="text-xs text-slate-500">บันทึกและดูรายการลาของทุกคนแบบเรียลไทม์</p>
@@ -25,13 +25,36 @@
     </div>
   </header>
 
-  <main class="max-w-3xl mx-auto px-4 mt-6 space-y-6">
+  <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
 
-    <!-- สรุปโควตาการลา -->
-    <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-      <h2 class="text-base font-semibold mb-3 text-slate-800">📊 สรุปจำนวนวันที่ใช้ไป (โควตา 6 วัน)</h2>
-      <div id="quotaSummary" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <!-- โหลดข้อมูลสรุปอัตโนมัติ -->
+    <!-- สรุปโควตาการลาแยกตามประเภท -->
+    <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+      <h2 class="text-base font-semibold text-slate-800">📊 สรุปโควตาวันลาคงเหลือของทีม</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- ลากิจ -->
+        <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-3">
+          <h3 class="font-bold text-amber-900 text-sm flex items-center gap-1.5">💼 โควตา "ลากิจ" (สูงสุด 6 วัน)</h3>
+          <div id="quotaBusiness" class="space-y-2"></div>
+        </div>
+
+        <!-- ลาพักร้อน -->
+        <div class="bg-sky-50/50 p-4 rounded-xl border border-sky-200 space-y-3">
+          <h3 class="font-bold text-sky-900 text-sm flex items-center gap-1.5">🏖️ โควตา "ลาพักร้อน" (สูงสุด 6 วัน)</h3>
+          <div id="quotaVacation" class="space-y-2"></div>
+        </div>
+
+        <!-- ลาป่วย -->
+        <div class="bg-rose-50/50 p-4 rounded-xl border border-rose-200 space-y-3">
+          <h3 class="font-bold text-rose-900 text-sm flex items-center gap-1.5">🤒 โควตา "ลาป่วย" (สูงสุด 30 วัน)</h3>
+          <div id="quotaSick" class="space-y-2"></div>
+        </div>
+
+        <!-- ลาวันเกิด -->
+        <div class="bg-purple-50/50 p-4 rounded-xl border border-purple-200 space-y-3">
+          <h3 class="font-bold text-purple-900 text-sm flex items-center gap-1.5">🎂 โควตา "ลาวันเกิด" (สูงสุด 1 วัน)</h3>
+          <div id="quotaBirthday" class="space-y-2"></div>
+        </div>
       </div>
     </section>
 
@@ -209,7 +232,6 @@
     }
 
     function renderQuotaSummary() {
-      const summaryEl = document.getElementById('quotaSummary');
       const members = [
         'กุสุมา ไชยโชติ (พัท)',
         'ภัทราภรณ์ หุ่นดี (รุ้ง)',
@@ -221,33 +243,53 @@
         'วรกาญจน์ พรมนอก (โอ๋)',
         'เฉลิมพล คงปรีชา (ตั๊ก)'
       ];
-      const maxQuota = 6;
 
-      const usage = {};
-      members.forEach(m => usage[m] = 0);
+      const quotas = {
+        'ลากิจ': 6,
+        'ลาพักร้อน': 6,
+        'ลาป่วย': 30,
+        'ลาวันเกิด': 1
+      };
+
+      const usage = {
+        'ลากิจ': {},
+        'ลาพักร้อน': {},
+        'ลาป่วย': {},
+        'ลาวันเกิด': {}
+      };
+
+      Object.keys(quotas.type || quotas).forEach(type => {
+        members.forEach(m => usage[type][m] = 0);
+      });
 
       allLeaves.forEach(item => {
-        if (usage[item.name] !== undefined && item.status === 'ลาแน่นอน') {
-          usage[item.name] += countDays(item.startDate, item.endDate);
+        if (item.status === 'ลาแน่นอน' && usage[item.type] && usage[item.type][item.name] !== undefined) {
+          usage[item.type][item.name] += countDays(item.startDate, item.endDate);
         }
       });
 
-      summaryEl.innerHTML = members.map(name => {
-        const used = usage[name];
-        const percent = Math.min(Math.round((used / maxQuota) * 100), 100);
-        const barColor = used > maxQuota ? 'bg-rose-500' : 'bg-blue-600';
-        return `
-          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1.5">
-            <div class="flex justify-between items-center text-sm font-semibold">
-              <span class="text-slate-800">${name}</span>
-              <span class="${used > maxQuota ? 'text-rose-600' : 'text-blue-700'}">${used}/${maxQuota} วัน</span>
+      const generateList = (type, maxQuota, colorClass) => {
+        return members.map(name => {
+          const used = usage[type][name];
+          const percent = Math.min(Math.round((used / maxQuota) * 100), 100);
+          return `
+            <div class="bg-white p-2.5 rounded-lg border border-slate-100 space-y-1">
+              <div class="flex justify-between items-center text-xs font-semibold">
+                <span class="text-slate-800">${name}</span>
+                <span class="text-slate-600">${used}/${maxQuota} วัน</span>
+              </div>
+              <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div class="${colorClass} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+              </div>
             </div>
-            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-              <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
-            </div>
-          </div>
-        `;
-      }).join('');
+          `;
+        }).join('');
+      };
+
+      document.getElementById('quotaBusiness').innerHTML = generateList('ลากิจ', 6, 'bg-amber-500');
+      document.getElementById('quotaVacation').innerHTML = generateList('ลาพักร้อน', 6, 'bg-sky-500');
+      document.getElementById('quotaSick').innerHTML = generateList('ลาป่วย', 30, 'bg-rose-500');
+      document.getElementById('quotaBirthday').innerHTML = generateList('ลาวันเกิด', 1, 'bg-purple-500');
     }
 
     function renderLeaves() {
