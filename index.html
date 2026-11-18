@@ -199,7 +199,7 @@
     <!-- ตัวกรองและรายการแสดงผล -->
     <section class="space-y-3">
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <h2 class="text-base font-semibold text-slate-800">📋 รายการอัปเดตของทุกคน</h2>
+        <h2 class="text-base font-semibold text-slate-800">📋 รายการรอยืนยัน / แผนลา</h2>
         <div class="flex flex-wrap gap-2">
           <!-- ตัวกรองรายชื่อบุคคล -->
           <select id="filterPerson" onchange="renderLeaves()" class="text-sm bg-white border border-slate-300 rounded-xl px-3 py-1.5 outline-none">
@@ -343,7 +343,9 @@
       const typeFilter = document.getElementById('filterType').value;
       const listEl = document.getElementById('leaveList');
 
-      let filtered = allLeaves;
+      // กรองเอาเฉพาะรายการที่ยังไม่ถูกล็อก (isLocked เป็น false หรือ undefined) ออกมาแสดง
+      let filtered = allLeaves.filter(item => !item.isLocked);
+
       if (personFilter !== 'ALL') {
         filtered = filtered.filter(item => item.name === personFilter);
       }
@@ -352,7 +354,7 @@
       }
 
       if (filtered.length === 0) {
-        listEl.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center text-sm text-slate-400 border border-slate-200">ยังไม่มีรายการวันลาตามเงื่อนไขนี้</div>`;
+        listEl.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center text-sm text-slate-400 border border-slate-200">ไม่มีรายการรอยืนยันในขณะนี้ (รายการที่ยืนยันแล้วถูกซ่อนไว้)</div>`;
         return;
       }
 
@@ -364,35 +366,6 @@
         const statusBadge = item.status === 'ลาแน่นอน' 
           ? `<span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">✅ ลาแน่นอน</span>`
           : `<span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">📌 แผนลา</span>`;
-
-        // สร้างปุ่มจัดการตามสถานะการล็อก (isLocked)
-        let actionButtons = '';
-        if (item.isLocked) {
-          actionButtons = `
-            <span class="text-xs font-medium px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-              🔒 ล็อกแล้ว
-            </span>
-            <button onclick="toggleLock('${item.id}')" title="ยกเลิกยืนยัน"
-              class="text-slate-500 hover:text-slate-800 p-1.5 rounded-lg hover:bg-slate-100 transition text-xs font-medium">
-              ปลดล็อก
-            </button>
-          `;
-        } else {
-          actionButtons = `
-            <button onclick="toggleLock('${item.id}')" title="ยืนยันรายการ"
-              class="text-emerald-600 hover:text-emerald-800 p-1.5 rounded-lg hover:bg-emerald-50 transition text-xs font-medium flex items-center gap-0.5">
-              ✔️ ยืนยัน
-            </button>
-            <button onclick="editLeave('${item.id}')" title="แก้ไขรายการ"
-              class="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 transition text-xs font-medium">
-              แก้ไข
-            </button>
-            <button onclick="deleteLeave('${item.id}')" title="ลบรายการ"
-              class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition text-xs">
-              ลบ
-            </button>
-          `;
-        }
 
         return `
           <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-start gap-3">
@@ -408,31 +381,38 @@
               <p class="text-sm text-slate-600">💬 เหตุผล: ${item.reason}</p>
             </div>
             <div class="flex items-center gap-1">
-              ${actionButtons}
+              <button onclick="confirmAndLock('${item.id}')" title="ยืนยันรายการ"
+                class="text-emerald-600 hover:text-emerald-800 p-1.5 rounded-lg hover:bg-emerald-50 transition text-xs font-medium flex items-center gap-0.5">
+                ✔️ ยืนยัน
+              </button>
+              <button onclick="editLeave('${item.id}')" title="แก้ไขรายการ"
+                class="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 transition text-xs font-medium">
+                แก้ไข
+              </button>
+              <button onclick="deleteLeave('${item.id}')" title="ลบรายการ"
+                class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition text-xs">
+                ลบ
+              </button>
             </div>
           </div>
         `;
       }).join('');
     }
 
-    // ฟังก์ชันสลับสถานะ ล็อก / ปลดล็อก
-    function toggleLock(id) {
-      const item = allLeaves.find(i => i.id === id);
-      if (!item) return;
+    // ฟังก์ชันกด "ยืนยัน" เพื่อบันทึกสถานะล็อกไปยัง Firebase
+    async function confirmAndLock(id) {
+      if (!confirm('ยืนยันรายการนี้ใช่ไหม? เมื่อยืนยันแล้ว รายการจะถูกซ่อนจากหน้าจอหลัก (แต่ยังเก็บไว้ในระบบสำหรับ export รายงาน)')) return;
 
-      if (!item.isLocked) {
-        if (!confirm('ยืนยันรายการนี้ใช่ไหม? เมื่อยืนยันแล้วจะไม่สามารถแก้ไขหรือลบได้ จนกว่าจะกดปลดล็อก')) return;
-      } else {
-        if (!confirm('ต้องการปลดล็อกรายการนี้เพื่อให้สามารถแก้ไข/ลบได้ใช่ไหม?')) return;
-      }
+      const updateUrl = FIREBASE_URL.replace('/leaves.json', `/leaves/${id}/isLocked.json`);
+      await fetch(updateUrl, {
+        method: 'PUT',
+        body: JSON.stringify(true)
+      });
 
-      item.isLocked = !item.isLocked;
-      
-      // ถ้ากำลังแก้ไขรายการนี้อยู่แล้วกดล็อก ให้ล้างฟอร์ม
-      if (item.isLocked && document.getElementById('editId').value === id) {
+      if (document.getElementById('editId').value === id) {
         resetForm();
       }
-      renderLeaves();
+      fetchLeaves();
     }
 
     function editLeave(id) {
@@ -482,6 +462,7 @@
         type: document.querySelector('input[name="leaveType"]:checked').value,
         status: document.querySelector('input[name="leaveStatus"]:checked').value,
         reason: document.getElementById('reason').value.trim(),
+        isLocked: false,
         createdAt: new Date().toISOString()
       };
 
@@ -512,32 +493,36 @@
     }
 
     function copySummary() {
-      if (allLeaves.length === 0) return alert('ยังไม่มีข้อมูลสำหรับคัดลอก');
-      const lines = allLeaves.slice(0, 15).map((item, idx) => {
+      // คัดลอกเฉพาะรายการที่ยังไม่ยืนยัน (หรือจะเลือกทั้งหมดก็ได้ ตรงนี้ดึงจากรายการที่แสดงอยู่)
+      const visibleLeaves = allLeaves.filter(item => !item.isLocked);
+      if (visibleLeaves.length === 0) return alert('ไม่มีรายการรอยืนยันสำหรับคัดลอก');
+      const lines = visibleLeaves.slice(0, 15).map((item, idx) => {
         const dText = item.startDate === item.endDate ? formatThaiDate(item.startDate) : `${formatThaiDate(item.startDate)} ถึง ${formatThaiDate(item.endDate)}`;
         return `${idx + 1}. ${item.name} (${item.type} - ${item.status})\n   📅 ${dText}\n   💬 เหตุผล: ${item.reason}`;
       });
-      const text = `📌 อัปเดตรายการวันลาทีม\n------------------\n${lines.join('\n\n')}`;
+      const text = `📌 อัปเดตรายการวันลาทีม (รอยืนยัน)\n------------------\n${lines.join('\n\n')}`;
       navigator.clipboard.writeText(text).then(() => {
-        alert('คัดลอกสรุปรายการวันลาเรียบร้อย! นำไปวางในแชทกลุ่มได้เลย');
+        alert('คัดลอกสรุปรายการเรียบร้อย!');
       });
     }
 
     function exportToExcel() {
       if (allLeaves.length === 0) return alert('ยังไม่มีข้อมูลสำหรับดาวน์โหลด');
       
-      let csv = '\uFEFFลำดับ,ชื่อ-นามสกุล,ประเภทการลา,สถานะ,ตั้งแต่วันที่,ถึงวันที่,จำนวนวัน,เหตุผล\n';
+      // ส่งออกข้อมูลทั้งหมด (รวมทั้งที่ยืนยันแล้วและยังไม่ยืนยัน เพื่อทำรายงานภาพรวม)
+      let csv = '\uFEFFลำดับ,ชื่อ-นามสกุล,ประเภทการลา,สถานะ,การยืนยัน,ตั้งแต่วันที่,ถึงวันที่,จำนวนวัน,เหตุผล\n';
       
       allLeaves.forEach((item, index) => {
         const daysCount = countDays(item.startDate, item.endDate);
-        csv += `${index + 1},"${item.name}","${item.type}","${item.status}","${item.startDate}","${item.endDate}",${daysCount},"${item.reason}"\n`;
+        const lockStatus = item.isLocked ? 'ยืนยันแล้ว (ล็อก)' : 'รอยืนยัน / แผนลา';
+        csv += `${index + 1},"${item.name}","${item.type}","${item.status}","${lockStatus}","${item.startDate}","${item.endDate}",${daysCount},"${item.reason}"\n`;
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `รายงานวันลาทีม_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `รายงานวันลาทีมทั้งหมด_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
