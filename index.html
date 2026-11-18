@@ -165,4 +165,75 @@
       const listEl = document.getElementById('leaveList');
       const filtered = filter === 'ALL' ? allLeaves : allLeaves.filter(item => item.type === filter);
 
-      if (filtered
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center text-sm text-slate-400 border border-slate-200">ยังไม่มีรายการวันลาในหมวดนี้</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(item => `
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-start gap-3">
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-bold text-slate-900 text-base">${item.name}</span>
+              <span class="text-xs font-medium px-2.5 py-0.5 rounded-full border ${getBadgeStyle(item.type)}">
+                ${item.type}
+              </span>
+            </div>
+            <p class="text-sm font-medium text-blue-700">🗓️ ${formatThaiDate(item.date)}</p>
+            <p class="text-sm text-slate-600">💬 เหตุผล: ${item.reason}</p>
+          </div>
+          <button onclick="deleteLeave('${item.id}')" title="ลบรายการ"
+            class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition text-xs">
+            ลบ
+          </button>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('leaveForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'กำลังบันทึก...';
+
+      const payload = {
+        name: document.getElementById('empName').value.trim(),
+        date: document.getElementById('leaveDate').value,
+        type: document.querySelector('input[name="leaveType"]:checked').value,
+        reason: document.getElementById('reason').value.trim(),
+        createdAt: new Date().toISOString()
+      };
+
+      await fetch(FIREBASE_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      document.getElementById('reason').value = '';
+      btn.disabled = false;
+      btn.textContent = 'บันทึกวันลา';
+      fetchLeaves();
+    });
+
+    async function deleteLeave(id) {
+      if (!confirm('ต้องการลบรายการลานี้ใช่ไหม?')) return;
+      const deleteUrl = FIREBASE_URL.replace('/leaves.json', `/leaves/${id}.json`);
+      await fetch(deleteUrl, { method: 'DELETE' });
+      fetchLeaves();
+    }
+
+    function copySummary() {
+      if (allLeaves.length === 0) return alert('ยังไม่มีข้อมูลสำหรับคัดลอก');
+      const lines = allLeaves.slice(0, 15).map((item, idx) =>
+        `${idx + 1}. ${item.name} (${item.type})\n   📅 ${formatThaiDate(item.date)}\n   💬 เหตุผล: ${item.reason}`
+      );
+      const text = `📌 อัปเดตรายการวันลาทีม\n------------------\n${lines.join('\n\n')}`;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('คัดลอกสรุปรายการวันลาเรียบร้อย! นำไปวางในแชทกลุ่มได้เลย');
+      });
+    }
+
+    fetchLeaves();
+  </script>
+</body>
+</html>
