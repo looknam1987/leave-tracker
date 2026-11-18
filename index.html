@@ -160,13 +160,30 @@
     <section class="space-y-3">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <h2 class="text-base font-semibold text-slate-800">📋 รายการอัปเดตของทุกคน</h2>
-        <select id="filterType" onchange="renderLeaves()" class="text-sm bg-white border border-slate-300 rounded-xl px-3 py-1.5 outline-none">
-          <option value="ALL">แสดงทุกประเภทการลา</option>
-          <option value="ลากิจ">ลากิจ</option>
-          <option value="ลาพักร้อน">ลาพักร้อน</option>
-          <option value="ลาป่วย">ลาป่วย</option>
-          <option value="ลาวันเกิด">ลาวันเกิด</option>
-        </select>
+        <div class="flex flex-wrap gap-2">
+          <!-- ตัวกรองรายชื่อบุคคล -->
+          <select id="filterPerson" onchange="renderLeaves()" class="text-sm bg-white border border-slate-300 rounded-xl px-3 py-1.5 outline-none">
+            <option value="ALL">ทุกคนทุกชื่อ</option>
+            <option value="กุสุมา ไชยโชติ (พัท)">พัท</option>
+            <option value="ภัทราภรณ์ หุ่นดี (รุ้ง)">รุ้ง</option>
+            <option value="ประไพพร กรุตรนิยม (ปู)">ปู</option>
+            <option value="อรนภา ตุ่มอ่อน (ลูกน้ำ)">ลูกน้ำ</option>
+            <option value="จิราพร พิมพ์โคตร (จิ)">จิ</option>
+            <option value="วิริยา เหล่าเขตกิจ (ใหม่)">ใหม่</option>
+            <option value="เฌอลินญ์ ยศธรเตโชพัฒน์ (เฌอ)">เฌอ</option>
+            <option value="วรกาญจน์ พรมนอก (โอ๋)">โอ๋</option>
+            <option value="เฉลิมพล คงปรีชา (ตั๊ก)">ตั๊ก</option>
+          </select>
+
+          <!-- ตัวกรองประเภทการลา -->
+          <select id="filterType" onchange="renderLeaves()" class="text-sm bg-white border border-slate-300 rounded-xl px-3 py-1.5 outline-none">
+            <option value="ALL">ทุกประเภทการลา</option>
+            <option value="ลากิจ">ลากิจ</option>
+            <option value="ลาพักร้อน">ลาพักร้อน</option>
+            <option value="ลาป่วย">ลาป่วย</option>
+            <option value="ลาวันเกิด">ลาวันเกิด</option>
+          </select>
+        </div>
       </div>
 
       <div id="leaveList" class="space-y-3">
@@ -231,34 +248,23 @@
       }
     }
 
+    const members = [
+      'กุสุมา ไชยโชติ (พัท)',
+      'ภัทราภรณ์ หุ่นดี (รุ้ง)',
+      'ประไพพร กรุตรนิยม (ปู)',
+      'อรนภา ตุ่มอ่อน (ลูกน้ำ)',
+      'จิราพร พิมพ์โคตร (จิ)',
+      'วิริยา เหล่าเขตกิจ (ใหม่)',
+      'เฌอลินญ์ ยศธรเตโชพัฒน์ (เฌอ)',
+      'วรกาญจน์ พรมนอก (โอ๋)',
+      'เฉลิมพล คงปรีชา (ตั๊ก)'
+    ];
+
     function renderQuotaSummary() {
-      const members = [
-        'กุสุมา ไชยโชติ (พัท)',
-        'ภัทราภรณ์ หุ่นดี (รุ้ง)',
-        'ประไพพร กรุตรนิยม (ปู)',
-        'อรนภา ตุ่มอ่อน (ลูกน้ำ)',
-        'จิราพร พิมพ์โคตร (จิ)',
-        'วิริยา เหล่าเขตกิจ (ใหม่)',
-        'เฌอลินญ์ ยศธรเตโชพัฒน์ (เฌอ)',
-        'วรกาญจน์ พรมนอก (โอ๋)',
-        'เฉลิมพล คงปรีชา (ตั๊ก)'
-      ];
+      const quotas = { 'ลากิจ': 6, 'ลาพักร้อน': 6, 'ลาป่วย': 30, 'ลาวันเกิด': 1 };
+      const usage = { 'ลากิจ': {}, 'ลาพักร้อน': {}, 'ลาป่วย': {}, 'ลาวันเกิด': {} };
 
-      const quotas = {
-        'ลากิจ': 6,
-        'ลาพักร้อน': 6,
-        'ลาป่วย': 30,
-        'ลาวันเกิด': 1
-      };
-
-      const usage = {
-        'ลากิจ': {},
-        'ลาพักร้อน': {},
-        'ลาป่วย': {},
-        'ลาวันเกิด': {}
-      };
-
-      Object.keys(quotas.type || quotas).forEach(type => {
+      Object.keys(quotas).forEach(type => {
         members.forEach(m => usage[type][m] = 0);
       });
 
@@ -293,12 +299,20 @@
     }
 
     function renderLeaves() {
-      const filter = document.getElementById('filterType').value;
+      const personFilter = document.getElementById('filterPerson').value;
+      const typeFilter = document.getElementById('filterType').value;
       const listEl = document.getElementById('leaveList');
-      const filtered = filter === 'ALL' ? allLeaves : allLeaves.filter(item => item.type === filter);
+
+      let filtered = allLeaves;
+      if (personFilter !== 'ALL') {
+        filtered = filtered.filter(item => item.name === personFilter);
+      }
+      if (typeFilter !== 'ALL') {
+        filtered = filtered.filter(item => item.type === typeFilter);
+      }
 
       if (filtered.length === 0) {
-        listEl.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center text-sm text-slate-400 border border-slate-200">ยังไม่มีรายการวันลาในหมวดนี้</div>`;
+        listEl.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center text-sm text-slate-400 border border-slate-200">ยังไม่มีรายการวันลาตามเงื่อนไขนี้</div>`;
         return;
       }
 
