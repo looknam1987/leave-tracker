@@ -34,8 +34,22 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อ-ชื่อเล่น ผู้ลา *</label>
-            <input type="text" id="empName" required placeholder="เช่น ลูกน้ำ, บอล, พี่ต้น"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+            
+<select id="empName" required
+  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+  <option value="" disabled selected>-- กรุณาเลือกชื่อ --</option>
+    <option value="พัท">กุสุมา ไชยโชติ</option>
+    <option value="รุ้ง">ภัทราภรณ์ หุ่นดี</option>
+    <option value="ปู">ประไพพร กรุตรนิยม</option>
+     <option value="ลูกน้ำ">อรนภา ตุ่มอ่อน</option>
+  <option value="จิ">จิราพร พิมพ์โคตร</option>
+  <option value="ใหม่">วิริยา เหล่าเขตกิจ</option>
+    <option value="เฌอ">เฌอลินญ์ ยศธรเตโชพัฒน์</option>
+      <option value="โอ๋">วรกายจน์ พรมนอก</option>
+      <option value="ตั๊ก">เฉลิมพล คงปรีชา</option>
+</select>
+
+            
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">วันที่ลา *</label>
