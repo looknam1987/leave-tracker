@@ -4,7 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ระบบบันทึกและอัปเดตวันลาทีม</title>
-
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; }
+  </style>
+</head>
+<body class="text-slate-800 pb-12">
 
   <!-- สร้างไอคอนคำว่า "ลา" อัตโนมัติสำหรับหน้าจอมือถือ -->
   <link id="appIcon" rel="apple-touch-icon" href="">
@@ -15,41 +21,23 @@
       canvas.width = 512;
       canvas.height = 512;
       const ctx = canvas.getContext('2d');
-
-      // พื้นหลังสีแดง Rose-600
       ctx.fillStyle = '#e11d48';
       ctx.fillRect(0, 0, 512, 512);
-
-      // ตัวอักษรคำว่า "ลา" สีขาวตรงกลาง
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 230px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('ลา', 256, 256);
-
+      ctx.fillText('ลา', 256, 285);
       const iconUrl = canvas.toDataURL('image/png');
       document.getElementById('appIcon').href = iconUrl;
       document.getElementById('favIcon').href = iconUrl;
     })();
   </script>
 
-  
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; }
-  </style>
-</head>
-<body class="text-slate-800 pb-12">
-
   <!-- Header -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
     <div class="max-w-4xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
       <div class="flex items-center gap-3">
-        <!-- ไอคอนคำว่า ลา ดีไซน์เด่นชัด -->
         <div class="w-11 h-11 bg-rose-600 text-white font-bold rounded-2xl flex items-center justify-center text-lg shadow-md shadow-rose-200 tracking-tighter">
           ลา
         </div>
@@ -102,10 +90,18 @@
       </div>
     </section>
 
-    <!-- ฟอร์มบันทึกวันลา -->
-    <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-      <h2 class="text-base font-semibold mb-4 text-slate-800">➕ แจ้งวันลาใหม่</h2>
+    <!-- ฟอร์มบันทึก/แก้ไขวันลา -->
+    <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 relative">
+      <div id="formTitleBar" class="flex justify-between items-center mb-4">
+        <h2 id="formTitle" class="text-base font-semibold text-slate-800">➕ แจ้งวันลาใหม่</h2>
+        <button id="cancelEditBtn" type="button" onclick="resetForm()" class="hidden text-xs text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg hover:bg-rose-100 transition">
+          ✕ ยกเลิกการแก้ไข
+        </button>
+      </div>
+
       <form id="leaveForm" class="space-y-4">
+        <input type="hidden" id="editId" value="">
+
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อ-ชื่อเล่น ผู้ลา *</label>
           <select id="empName" required
@@ -382,20 +378,130 @@
               <p class="text-sm font-medium text-blue-700">${dateText}</p>
               <p class="text-sm text-slate-600">💬 เหตุผล: ${item.reason}</p>
             </div>
-            <button onclick="deleteLeave('${item.id}')" title="ลบรายการ"
-              class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition text-xs">
-              ลบ
-            </button>
+            <div class="flex items-center gap-1">
+              <button onclick="editLeave('${item.id}')" title="แก้ไขรายการ"
+                class="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 transition text-xs font-medium">
+                แก้ไข
+              </button>
+              <button onclick="deleteLeave('${item.id}')" title="ลบรายการ"
+                class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition text-xs">
+                ลบ
+              </button>
+            </div>
           </div>
         `;
       }).join('');
+    }
+
+    // ฟังก์ชันดึงข้อมูลมาใส่ฟอร์มเพื่อแก้ไข
+    function editLeave(id) {
+      const item = allLeaves.find(i => i.id === id);
+      if (!item) return;
+
+      document.getElementById('editId').value = item.id;
+      document.getElementById('empName').value = item.name;
+      document.getElementById('startDate').value = item.startDate;
+      document.getElementById('endDate').value = item.endDate;
+      document.getElementById('reason').value = item.reason;
+
+      // เลือก Radio ประเภทการลา
+      const typeRadios = document.querySelectorAll('input[name="leaveType"]');
+      typeRadios.forEach(r => {
+        if (r.value === item.type) r.checked = true;
+      });
+
+      // เลือก Radio สถานะการลา
+      const statusRadios = document.querySelectorAll('input[name="leaveStatus"]');
+      statusRadios.forEach(r => {
+        if (r.value === item.status) r.checked = true;
+      });
+
+      // เปลี่ยนข้อความหัวข้อฟอร์ม
+      document.getElementById('formTitle').textContent = '✏️ แก้ไขรายการวันลา';
+      document.getElementById('submitBtn').textContent = 'บันทึกการแก้ไข';
+      document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+      // เลื่อนหน้าจอขึ้นไปที่ฟอร์ม
+      window.scrollTo({ top: 200, behavior: 'smooth' });
+    }
+
+    // ล้างฟอร์มกลับเป็นโหมดเพิ่มใหม่
+    function resetForm() {
+      document.getElementById('editId').value = '';
+      document.getElementById('leaveForm').reset();
+      document.getElementById('startDate').value = todayStr;
+      document.getElementById('endDate').value = todayStr;
+      document.getElementById('formTitle').textContent = '➕ แจ้งวันลาใหม่';
+      document.getElementById('submitBtn').textContent = 'บันทึกวันลา';
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+    }
+
+    // บันทึก (รองรับทั้งเพิ่มใหม่และอัปเดตแก้ไข)
+    document.getElementById('leaveForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const editId = document.getElementById('editId').value;
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = editId ? 'กำลังอัปเดต...' : 'กำลังบันทึก...';
+
+      const payload = {
+        name: document.getElementById('empName').value,
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        type: document.querySelector('input[name="leaveType"]:checked').value,
+        status: document.querySelector('input[name="leaveStatus"]:checked').value,
+        reason: document.getElementById('reason').value.trim(),
+        createdAt: new Date().toISOString()
+      };
+
+      if (editId) {
+        // อัปเดตข้อมูลเดิม (PUT)
+        const updateUrl = FIREBASE_URL.replace('/leaves.json', `/leaves/${editId}.json`);
+        await fetch(updateUrl, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+      } else {
+        // เพิ่มข้อมูลใหม่ (POST)
+        await fetch(FIREBASE_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+      }
+
+      resetForm();
+      btn.disabled = false;
+      fetchLeaves();
+    });
+
+    async function deleteLeave(id) {
+      if (!confirm('ต้องการลบ/ยกเลิกรายการลานี้ใช่ไหม? (หากลบ ระบบจะคืนโควตาให้ทันที)')) return;
+      const deleteUrl = FIREBASE_URL.replace('/leaves.json', `/leaves/${id}.json`);
+      await fetch(deleteUrl, { method: 'DELETE' });
+      
+      // ถ้ากำลังแก้รายการนี้อยู่แล้วกดลบ ให้รีเซ็ตฟอร์มด้วย
+      if (document.getElementById('editId').value === id) {
+        resetForm();
+      }
+      fetchLeaves();
+    }
+
+    function copySummary() {
+      if (allLeaves.length === 0) return alert('ยังไม่มีข้อมูลสำหรับคัดลอก');
+      const lines = allLeaves.slice(0, 15).map((item, idx) => {
+        const dText = item.startDate === item.endDate ? formatThaiDate(item.startDate) : `${formatThaiDate(item.startDate)} ถึง ${formatThaiDate(item.endDate)}`;
+        return `${idx + 1}. ${item.name} (${item.type} - ${item.status})\n   📅 ${dText}\n   💬 เหตุผล: ${item.reason}`;
+      });
+      const text = `📌 อัปเดตรายการวันลาทีม\n------------------\n${lines.join('\n\n')}`;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('คัดลอกสรุปรายการวันลาเรียบร้อย! นำไปวางในแชทกลุ่มได้เลย');
+      });
     }
 
     // ฟังก์ชันดาวน์โหลดไฟล์ Excel (.csv)
     function exportToExcel() {
       if (allLeaves.length === 0) return alert('ยังไม่มีข้อมูลสำหรับดาวน์โหลด');
       
-      // หัวตาราง CSV (เติม BOM \uFEFF เพื่อให้ Excel อ่านภาษาไทยไม่อ่านเป็นต่างดาว)
       let csv = '\uFEFFลำดับ,ชื่อ-นามสกุล,ประเภทการลา,สถานะ,ตั้งแต่วันที่,ถึงวันที่,จำนวนวัน,เหตุผล\n';
       
       allLeaves.forEach((item, index) => {
@@ -411,52 +517,6 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    }
-
-    document.getElementById('leaveForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.textContent = 'กำลังบันทึก...';
-
-      const payload = {
-        name: document.getElementById('empName').value,
-        startDate: document.getElementById('startDate').value,
-        endDate: document.getElementById('endDate').value,
-        type: document.querySelector('input[name="leaveType"]:checked').value,
-        status: document.querySelector('input[name="leaveStatus"]:checked').value,
-        reason: document.getElementById('reason').value.trim(),
-        createdAt: new Date().toISOString()
-      };
-
-      await fetch(FIREBASE_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
-
-      document.getElementById('reason').value = '';
-      btn.disabled = false;
-      btn.textContent = 'บันทึกวันลา';
-      fetchLeaves();
-    });
-
-    async function deleteLeave(id) {
-      if (!confirm('ต้องการลบ/ยกเลิกรายการลานี้ใช่ไหม? (หากเปลี่ยนใจมาทำงาน ระบบจะคืนโควตาให้ทันที)')) return;
-      const deleteUrl = FIREBASE_URL.replace('/leaves.json', `/leaves/${id}.json`);
-      await fetch(deleteUrl, { method: 'DELETE' });
-      fetchLeaves();
-    }
-
-    function copySummary() {
-      if (allLeaves.length === 0) return alert('ยังไม่มีข้อมูลสำหรับคัดลอก');
-      const lines = allLeaves.slice(0, 15).map((item, idx) => {
-        const dText = item.startDate === item.endDate ? formatThaiDate(item.startDate) : `${formatThaiDate(item.startDate)} ถึง ${formatThaiDate(item.endDate)}`;
-        return `${idx + 1}. ${item.name} (${item.type} - ${item.status})\n   📅 ${dText}\n   💬 เหตุผล: ${item.reason}`;
-      });
-      const text = `📌 อัปเดตรายการวันลาทีม\n------------------\n${lines.join('\n\n')}`;
-      navigator.clipboard.writeText(text).then(() => {
-        alert('คัดลอกสรุปรายการวันลาเรียบร้อย! นำไปวางในแชทกลุ่มได้เลย');
-      });
     }
 
     fetchLeaves();
