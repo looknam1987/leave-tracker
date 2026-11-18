@@ -277,7 +277,7 @@
         const res = await fetch(FIREBASE_URL);
         const data = await res.json();
         allLeaves = data
-          ? Object.entries(data).map(([id, val]) => ({ id, ...val }))
+          ? Object.entries(data).map(([id, val]) => ({ id, isLocked: false, ...val }))
           : [];
         allLeaves.sort((a, b) => b.startDate.localeCompare(a.startDate));
         renderQuotaSummary();
@@ -365,6 +365,35 @@
           ? `<span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">✅ ลาแน่นอน</span>`
           : `<span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">📌 แผนลา</span>`;
 
+        // สร้างปุ่มจัดการตามสถานะการล็อก (isLocked)
+        let actionButtons = '';
+        if (item.isLocked) {
+          actionButtons = `
+            <span class="text-xs font-medium px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+              🔒 ล็อกแล้ว
+            </span>
+            <button onclick="toggleLock('${item.id}')" title="ยกเลิกยืนยัน"
+              class="text-slate-500 hover:text-slate-800 p-1.5 rounded-lg hover:bg-slate-100 transition text-xs font-medium">
+              ปลดล็อก
+            </button>
+          `;
+        } else {
+          actionButtons = `
+            <button onclick="toggleLock('${item.id}')" title="ยืนยันรายการ"
+              class="text-emerald-600 hover:text-emerald-800 p-1.5 rounded-lg hover:bg-emerald-50 transition text-xs font-medium flex items-center gap-0.5">
+              ✔️ ยืนยัน
+            </button>
+            <button onclick="editLeave('${item.id}')" title="แก้ไขรายการ"
+              class="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 transition text-xs font-medium">
+              แก้ไข
+            </button>
+            <button onclick="deleteLeave('${item.id}')" title="ลบรายการ"
+              class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition text-xs">
+              ลบ
+            </button>
+          `;
+        }
+
         return `
           <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-start gap-3">
             <div class="space-y-1.5">
@@ -379,24 +408,36 @@
               <p class="text-sm text-slate-600">💬 เหตุผล: ${item.reason}</p>
             </div>
             <div class="flex items-center gap-1">
-              <button onclick="editLeave('${item.id}')" title="แก้ไขรายการ"
-                class="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 transition text-xs font-medium">
-                แก้ไข
-              </button>
-              <button onclick="deleteLeave('${item.id}')" title="ลบรายการ"
-                class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition text-xs">
-                ลบ
-              </button>
+              ${actionButtons}
             </div>
           </div>
         `;
       }).join('');
     }
 
-    // ฟังก์ชันดึงข้อมูลมาใส่ฟอร์มเพื่อแก้ไข
-    function editLeave(id) {
+    // ฟังก์ชันสลับสถานะ ล็อก / ปลดล็อก
+    function toggleLock(id) {
       const item = allLeaves.find(i => i.id === id);
       if (!item) return;
+
+      if (!item.isLocked) {
+        if (!confirm('ยืนยันรายการนี้ใช่ไหม? เมื่อยืนยันแล้วจะไม่สามารถแก้ไขหรือลบได้ จนกว่าจะกดปลดล็อก')) return;
+      } else {
+        if (!confirm('ต้องการปลดล็อกรายการนี้เพื่อให้สามารถแก้ไข/ลบได้ใช่ไหม?')) return;
+      }
+
+      item.isLocked = !item.isLocked;
+      
+      // ถ้ากำลังแก้ไขรายการนี้อยู่แล้วกดล็อก ให้ล้างฟอร์ม
+      if (item.isLocked && document.getElementById('editId').value === id) {
+        resetForm();
+      }
+      renderLeaves();
+    }
+
+    function editLeave(id) {
+      const item = allLeaves.find(i => i.id === id);
+      if (!item || item.isLocked) return;
 
       document.getElementById('editId').value = item.id;
       document.getElementById('empName').value = item.name;
@@ -404,28 +445,19 @@
       document.getElementById('endDate').value = item.endDate;
       document.getElementById('reason').value = item.reason;
 
-      // เลือก Radio ประเภทการลา
       const typeRadios = document.querySelectorAll('input[name="leaveType"]');
-      typeRadios.forEach(r => {
-        if (r.value === item.type) r.checked = true;
-      });
+      typeRadios.forEach(r => { if (r.value === item.type) r.checked = true; });
 
-      // เลือก Radio สถานะการลา
       const statusRadios = document.querySelectorAll('input[name="leaveStatus"]');
-      statusRadios.forEach(r => {
-        if (r.value === item.status) r.checked = true;
-      });
+      statusRadios.forEach(r => { if (r.value === item.status) r.checked = true; });
 
-      // เปลี่ยนข้อความหัวข้อฟอร์ม
       document.getElementById('formTitle').textContent = '✏️ แก้ไขรายการวันลา';
       document.getElementById('submitBtn').textContent = 'บันทึกการแก้ไข';
       document.getElementById('cancelEditBtn').classList.remove('hidden');
 
-      // เลื่อนหน้าจอขึ้นไปที่ฟอร์ม
       window.scrollTo({ top: 200, behavior: 'smooth' });
     }
 
-    // ล้างฟอร์มกลับเป็นโหมดเพิ่มใหม่
     function resetForm() {
       document.getElementById('editId').value = '';
       document.getElementById('leaveForm').reset();
@@ -436,7 +468,6 @@
       document.getElementById('cancelEditBtn').classList.add('hidden');
     }
 
-    // บันทึก (รองรับทั้งเพิ่มใหม่และอัปเดตแก้ไข)
     document.getElementById('leaveForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const editId = document.getElementById('editId').value;
@@ -455,18 +486,10 @@
       };
 
       if (editId) {
-        // อัปเดตข้อมูลเดิม (PUT)
         const updateUrl = FIREBASE_URL.replace('/leaves.json', `/leaves/${editId}.json`);
-        await fetch(updateUrl, {
-          method: 'PUT',
-          body: JSON.stringify(payload)
-        });
+        await fetch(updateUrl, { method: 'PUT', body: JSON.stringify(payload) });
       } else {
-        // เพิ่มข้อมูลใหม่ (POST)
-        await fetch(FIREBASE_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
+        await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(payload) });
       }
 
       resetForm();
@@ -475,11 +498,13 @@
     });
 
     async function deleteLeave(id) {
+      const item = allLeaves.find(i => i.id === id);
+      if (!item || item.isLocked) return;
+
       if (!confirm('ต้องการลบ/ยกเลิกรายการลานี้ใช่ไหม? (หากลบ ระบบจะคืนโควตาให้ทันที)')) return;
       const deleteUrl = FIREBASE_URL.replace('/leaves.json', `/leaves/${id}.json`);
       await fetch(deleteUrl, { method: 'DELETE' });
       
-      // ถ้ากำลังแก้รายการนี้อยู่แล้วกดลบ ให้รีเซ็ตฟอร์มด้วย
       if (document.getElementById('editId').value === id) {
         resetForm();
       }
@@ -498,7 +523,6 @@
       });
     }
 
-    // ฟังก์ชันดาวน์โหลดไฟล์ Excel (.csv)
     function exportToExcel() {
       if (allLeaves.length === 0) return alert('ยังไม่มีข้อมูลสำหรับดาวน์โหลด');
       
