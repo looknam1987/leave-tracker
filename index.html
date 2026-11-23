@@ -12,29 +12,6 @@
 </head>
 <body class="text-slate-800 pb-12">
 
-  <link id="appIcon" rel="apple-touch-icon" href="">
-  <link id="favIcon" rel="icon" type="image/png" href="">
-  <script>
-    (function() {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 512;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#e11d48';
-        ctx.fillRect(0, 0, 512, 512);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 230px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('ลา', 256, 285);
-        const iconUrl = canvas.toDataURL('image/png');
-        document.getElementById('appIcon').href = iconUrl;
-        document.getElementById('favIcon').href = iconUrl;
-      } catch (e) {}
-    })();
-  </script>
-
   <!-- Header -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
     <div class="max-w-4xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
@@ -44,7 +21,7 @@
         </div>
         <div>
           <h1 class="text-xl font-bold text-slate-900">ระบบบันทึกและอัปเดตวันลาทีม</h1>
-          <p class="text-xs text-slate-500">บันทึกและดูรายการลาของทุกคนแบบเรียลไทม์</p>
+          <p id="syncStatus" class="text-xs text-slate-500">กำลังเชื่อมต่อข้อมูล...</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -266,9 +243,7 @@
         </div>
       </div>
 
-      <div id="leaveList" class="space-y-3">
-        <p class="text-center text-sm text-slate-400 py-8">กำลังโหลดข้อมูล...</p>
-      </div>
+      <div id="leaveList" class="space-y-3"></div>
     </section>
 
   </main>
@@ -316,8 +291,7 @@
       const em = document.getElementById('endMin').value;
       return {
         startTime: sh + ':' + sm,
-        endTime: eh + ':' + em,
-        dotText: sh + '.' + sm + '-' + eh + '.' + em
+        endTime: eh + ':' + em
       };
     }
 
@@ -363,11 +337,12 @@
 
     function formatThaiDate(dateStr) {
       if (!dateStr) return "";
-      const parts = dateStr.split('-');
-      if (parts.length !== 3) return dateStr;
+      const parts = String(dateStr).split('-');
+      if (parts.length !== 3) return String(dateStr);
       const y = Number(parts[0]);
       const m = Number(parts[1]);
       const d = Number(parts[2]);
+      if (!y || !m || !d) return String(dateStr);
       const dateObj = new Date(y, m - 1, d);
       const days = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
       const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
@@ -375,8 +350,10 @@
     }
 
     function countDays(start, end) {
+      if (!start || !end) return 1;
       const d1 = new Date(start);
       const d2 = new Date(end);
+      if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return 1;
       const diffTime = Math.abs(d2 - d1);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       return isNaN(diffDays) || diffDays < 1 ? 1 : diffDays;
@@ -390,22 +367,6 @@
       return 'bg-slate-100 text-slate-800';
     }
 
-    async function fetchLeaves() {
-      try {
-        const res = await fetch(FIREBASE_URL);
-        const data = await res.json();
-        allLeaves = data
-          ? Object.entries(data).map(([id, val]) => Object.assign({ id: id, isLocked: false }, val))
-          : [];
-        allLeaves.sort((a, b) => String(b.startDate || '').localeCompare(String(a.startDate || '')));
-        renderQuotaSummary();
-        renderLeaves();
-      } catch (err) {
-        document.getElementById('leaveList').innerHTML =
-          '<p class="text-center text-sm text-rose-500 py-6">ไม่สามารถเชื่อมต่อฐานข้อมูลได้</p>';
-      }
-    }
-
     function renderQuotaSummary() {
       const quotas = { 'ลากิจ': 6, 'ลาพักร้อน': 6, 'ลาป่วย': 30, 'ลาวันเกิด': 1 };
       const usage = { 'ลากิจ': {}, 'ลาพักร้อน': {}, 'ลาป่วย': {}, 'ลาวันเกิด': {} };
@@ -415,7 +376,7 @@
       });
 
       allLeaves.forEach(item => {
-        if (item.status === 'ลาแน่นอน' && usage[item.type] && usage[item.type][item.name] !== undefined) {
+        if (item && item.status === 'ลาแน่นอน' && usage[item.type] && usage[item.type][item.name] !== undefined) {
           usage[item.type][item.name] += countDays(item.startDate, item.endDate);
         }
       });
@@ -436,4 +397,232 @@
       };
 
       document.getElementById('quotaMatrix').innerHTML = members.map((name, idx) => {
-        const rowBg = idx % 2 === 0
+        const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
+        return (
+          '<div class="' + rowBg + ' p-3 flex flex-col md:flex-row md:items-center justify-between gap-2.5">' +
+            '<div class="font-semibold text-sm text-slate-800 md:w-56 shrink-0">' + name + '</div>' +
+            '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1">' +
+              buildBadge('💼', 'ลากิจ', usage['ลากิจ'][name], 6, 'bg-amber-50', 'text-amber-900', 'bg-amber-500') +
+              buildBadge('🏖️', 'พักร้อน', usage['ลาพักร้อน'][name], 6, 'bg-sky-50', 'text-sky-900', 'bg-sky-500') +
+              buildBadge('🤒', 'ลาป่วย', usage['ลาป่วย'][name], 30, 'bg-rose-50', 'text-rose-900', 'bg-rose-500') +
+              buildBadge('🎂', 'วันเกิด', usage['ลาวันเกิด'][name], 1, 'bg-purple-50', 'text-purple-900', 'bg-purple-500') +
+            '</div>' +
+          '</div>'
+        );
+      }).join('');
+    }
+
+    function formatItemSchedule(item) {
+      const datePart = item.startDate === item.endDate
+        ? formatThaiDate(item.startDate)
+        : 'ตั้งแต่ ' + formatThaiDate(item.startDate) + ' ถึง ' + formatThaiDate(item.endDate) + ' (' + countDays(item.startDate, item.endDate) + ' วัน)';
+
+      if (item.type === 'ลากิจ' && item.startTime && item.endTime) {
+        return '🗓️ ' + datePart + ' ⏰ เวลา ' + String(item.startTime).replace(':', '.') + '-' + String(item.endTime).replace(':', '.');
+      }
+      return '🗓️ ' + datePart;
+    }
+
+    function renderLeaves() {
+      const personFilter = document.getElementById('filterPerson').value;
+      const typeFilter = document.getElementById('filterType').value;
+      const listEl = document.getElementById('leaveList');
+
+      let filtered = allLeaves.filter(item => item && !item.isLocked);
+      if (personFilter !== 'ALL') filtered = filtered.filter(item => item.name === personFilter);
+      if (typeFilter !== 'ALL') filtered = filtered.filter(item => item.type === typeFilter);
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div class="bg-white rounded-2xl p-8 text-center text-sm text-slate-400 border border-slate-200">ไม่มีรายการรอยืนยันในขณะนี้ (รายการที่ยืนยันแล้วถูกซ่อนไว้)</div>';
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(item => {
+        const statusBadge = item.status === 'ลาแน่นอน'
+          ? '<span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">✅ ลาแน่นอน</span>'
+          : '<span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">📌 แผนลา</span>';
+
+        return (
+          '<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-start gap-3">' +
+            '<div class="space-y-1.5">' +
+              '<div class="flex flex-wrap items-center gap-2">' +
+                '<span class="font-bold text-slate-900 text-base">' + (item.name || '') + '</span>' +
+                '<span class="text-xs font-medium px-2.5 py-0.5 rounded-full border ' + getBadgeStyle(item.type) + '">' + (item.type || '') + '</span>' +
+                statusBadge +
+              '</div>' +
+              '<p class="text-sm font-medium text-blue-700">' + formatItemSchedule(item) + '</p>' +
+              '<p class="text-sm text-slate-600">💬 เหตุผล: ' + (item.reason || '') + '</p>' +
+            '</div>' +
+            '<div class="flex items-center gap-1">' +
+              '<button type="button" onclick="confirmAndLock(\'' + item.id + '\')" class="text-emerald-600 hover:text-emerald-800 p-1.5 rounded-lg hover:bg-emerald-50 text-xs font-medium">✔️ ยืนยัน</button>' +
+              '<button type="button" onclick="editLeave(\'' + item.id + '\')" class="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 text-xs font-medium">แก้ไข</button>' +
+              '<button type="button" onclick="deleteLeave(\'' + item.id + '\')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 text-xs">ลบ</button>' +
+            '</div>' +
+          '</div>'
+        );
+      }).join('');
+    }
+
+    // แสดงตารางโควตาและรายการเริ่มต้นทันที
+    renderQuotaSummary();
+    renderLeaves();
+
+    async function fetchLeaves() {
+      const statusEl = document.getElementById('syncStatus');
+      try {
+        const res = await fetch(FIREBASE_URL);
+        const data = await res.json();
+        allLeaves = (data && typeof data === 'object')
+          ? Object.entries(data).map(([id, val]) => Object.assign({ id: id, isLocked: false }, val || {}))
+          : [];
+        allLeaves.sort((a, b) => String(b.startDate || '').localeCompare(String(a.startDate || '')));
+        statusEl.textContent = 'บันทึกและดูรายการลาของทุกคนแบบเรียลไทม์';
+      } catch (err) {
+        statusEl.textContent = 'กำลังแสดงข้อมูลออฟไลน์ / เชื่อมต่อฐานข้อมูลไม่ได้';
+      }
+      renderQuotaSummary();
+      renderLeaves();
+    }
+
+    async function confirmAndLock(id) {
+      if (!confirm('ยืนยันรายการนี้ใช่ไหม? เมื่อยืนยันแล้ว รายการจะถูกซ่อนจากหน้าจอหลัก (แต่ยังเก็บไว้ในระบบสำหรับ export รายงาน)')) return;
+      const updateUrl = FIREBASE_URL.replace('/leaves.json', '/leaves/' + id + '/isLocked.json');
+      await fetch(updateUrl, { method: 'PUT', body: JSON.stringify(true) });
+      if (document.getElementById('editId').value === id) resetForm();
+      fetchLeaves();
+    }
+
+    function editLeave(id) {
+      const item = allLeaves.find(i => i.id === id);
+      if (!item || item.isLocked) return;
+
+      document.getElementById('editId').value = item.id;
+      document.getElementById('empName').value = item.name || '';
+      document.getElementById('startDate').value = item.startDate || todayStr;
+      document.getElementById('endDate').value = item.endDate || todayStr;
+      document.getElementById('reason').value = item.reason || '';
+
+      document.querySelectorAll('input[name="leaveType"]').forEach(r => {
+        if (r.value === item.type) r.checked = true;
+      });
+      toggleTimeBox();
+
+      if (item.startTime && item.endTime) {
+        const sp = String(item.startTime).split(':');
+        const ep = String(item.endTime).split(':');
+        setTime(sp[0] || '09', sp[1] === '30' ? '30' : '00', ep[0] || '18', ep[1] === '30' ? '30' : '00');
+      } else {
+        setTime('09', '00', '18', '00');
+      }
+
+      document.querySelectorAll('input[name="leaveStatus"]').forEach(r => {
+        if (r.value === item.status) r.checked = true;
+      });
+
+      document.getElementById('formTitle').textContent = '✏️ แก้ไขรายการวันลา';
+      document.getElementById('submitBtn').textContent = 'บันทึกการแก้ไข';
+      document.getElementById('cancelEditBtn').classList.remove('hidden');
+      window.scrollTo({ top: 200, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+      document.getElementById('editId').value = '';
+      document.getElementById('leaveForm').reset();
+      document.getElementById('startDate').value = todayStr;
+      document.getElementById('endDate').value = todayStr;
+      setTime('09', '00', '18', '00');
+      toggleTimeBox();
+      document.getElementById('formTitle').textContent = '➕ แจ้งวันลาใหม่';
+      document.getElementById('submitBtn').textContent = 'บันทึกวันลา';
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+    }
+
+    document.getElementById('leaveForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validateTime()) return;
+
+      const editId = document.getElementById('editId').value;
+      const btn = document.getElementById('submitBtn');
+      const leaveType = getSelectedType();
+      const timeRange = getTimeRange();
+      btn.disabled = true;
+      btn.textContent = editId ? 'กำลังอัปเดต...' : 'กำลังบันทึก...';
+
+      const payload = {
+        name: document.getElementById('empName').value,
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        type: leaveType,
+        startTime: leaveType === 'ลากิจ' ? timeRange.startTime : null,
+        endTime: leaveType === 'ลากิจ' ? timeRange.endTime : null,
+        status: document.querySelector('input[name="leaveStatus"]:checked').value,
+        reason: document.getElementById('reason').value.trim(),
+        isLocked: false,
+        createdAt: new Date().toISOString()
+      };
+
+      if (editId) {
+        const updateUrl = FIREBASE_URL.replace('/leaves.json', '/leaves/' + editId + '.json');
+        await fetch(updateUrl, { method: 'PUT', body: JSON.stringify(payload) });
+      } else {
+        await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(payload) });
+      }
+
+      resetForm();
+      btn.disabled = false;
+      fetchLeaves();
+    });
+
+    async function deleteLeave(id) {
+      const item = allLeaves.find(i => i.id === id);
+      if (!item || item.isLocked) return;
+      if (!confirm('ต้องการลบ/ยกเลิกรายการลานี้ใช่ไหม? (หากลบ ระบบจะคืนโควตาให้ทันที)')) return;
+      const deleteUrl = FIREBASE_URL.replace('/leaves.json', '/leaves/' + id + '.json');
+      await fetch(deleteUrl, { method: 'DELETE' });
+      if (document.getElementById('editId').value === id) resetForm();
+      fetchLeaves();
+    }
+
+    function copySummary() {
+      const visibleLeaves = allLeaves.filter(item => item && !item.isLocked);
+      if (visibleLeaves.length === 0) return alert('ไม่มีรายการรอยืนยันสำหรับคัดลอก');
+      const lines = visibleLeaves.slice(0, 15).map((item, idx) => {
+        const timeText = (item.type === 'ลากิจ' && item.startTime && item.endTime)
+          ? ' (' + String(item.startTime).replace(':', '.') + '-' + String(item.endTime).replace(':', '.') + ')'
+          : '';
+        const dText = item.startDate === item.endDate
+          ? formatThaiDate(item.startDate)
+          : formatThaiDate(item.startDate) + ' ถึง ' + formatThaiDate(item.endDate);
+        return (idx + 1) + '. ' + item.name + ' (' + item.type + timeText + ' - ' + item.status + ')\n   📅 ' + dText + '\n   💬 เหตุผล: ' + item.reason;
+      });
+      const text = '📌 อัปเดตรายการวันลาทีม (รอยืนยัน)\n------------------\n' + lines.join('\n\n');
+      navigator.clipboard.writeText(text).then(() => {
+        alert('คัดลอกสรุปรายการเรียบร้อย!');
+      });
+    }
+
+    function exportToExcel() {
+      if (allLeaves.length === 0) return alert('ยังไม่มีข้อมูลสำหรับดาวน์โหลด');
+      let csv = '\uFEFFลำดับ,ชื่อ-นามสกุล,ประเภทการลา,ช่วงเวลา,สถานะ,การยืนยัน,ตั้งแต่วันที่,ถึงวันที่,จำนวนวัน,เหตุผล\n';
+      allLeaves.forEach((item, index) => {
+        const daysCount = countDays(item.startDate, item.endDate);
+        const lockStatus = item.isLocked ? 'ยืนยันแล้ว (ล็อก)' : 'รอยืนยัน / แผนลา';
+        const timeRange = (item.type === 'ลากิจ' && item.startTime && item.endTime)
+          ? String(item.startTime).replace(':', '.') + '-' + String(item.endTime).replace(':', '.')
+          : '-';
+        csv += (index + 1) + ',"' + (item.name || '') + '","' + (item.type || '') + '","' + timeRange + '","' + (item.status || '') + '","' + lockStatus + '","' + (item.startDate || '') + '","' + (item.endDate || '') + '",' + daysCount + ',"' + (item.reason || '') + '"\n';
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'รายงานวันลาทีมทั้งหมด_' + getTodayLocal() + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    fetchLeaves();
+  </script>
+</body>
+</html>
