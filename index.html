@@ -12,25 +12,26 @@
 </head>
 <body class="text-slate-800 pb-12">
 
-  <!-- สร้างไอคอนคำว่า "ลา" อัตโนมัติสำหรับหน้าจอมือถือ -->
   <link id="appIcon" rel="apple-touch-icon" href="">
   <link id="favIcon" rel="icon" type="image/png" href="">
   <script>
     (function() {
-      const canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 512;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#e11d48';
-      ctx.fillRect(0, 0, 512, 512);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 230px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('ลา', 256, 285);
-      const iconUrl = canvas.toDataURL('image/png');
-      document.getElementById('appIcon').href = iconUrl;
-      document.getElementById('favIcon').href = iconUrl;
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#e11d48';
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 230px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('ลา', 256, 285);
+        const iconUrl = canvas.toDataURL('image/png');
+        document.getElementById('appIcon').href = iconUrl;
+        document.getElementById('favIcon').href = iconUrl;
+      } catch (e) {}
     })();
   </script>
 
@@ -47,10 +48,10 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button onclick="exportToExcel()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5">
+        <button type="button" onclick="exportToExcel()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-xl shadow-sm transition active:scale-95">
           📥 โหลดไฟล์ Excel
         </button>
-        <button onclick="copySummary()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-3.5 py-2 rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5">
+        <button type="button" onclick="copySummary()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-3.5 py-2 rounded-xl shadow-sm transition active:scale-95">
           📋 คัดลอกส่งแชท
         </button>
       </div>
@@ -70,13 +71,12 @@
           <span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800">🎂 วันเกิด (1)</span>
         </div>
       </div>
-      
       <div id="quotaMatrix" class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden"></div>
     </section>
 
     <!-- ฟอร์มบันทึก/แก้ไขวันลา -->
-    <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 relative">
-      <div id="formTitleBar" class="flex justify-between items-center mb-4">
+    <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+      <div class="flex justify-between items-center mb-4">
         <h2 id="formTitle" class="text-base font-semibold text-slate-800">➕ แจ้งวันลาใหม่</h2>
         <button id="cancelEditBtn" type="button" onclick="resetForm()" class="hidden text-xs text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg hover:bg-rose-100 transition">
           ✕ ยกเลิกการแก้ไข
@@ -88,8 +88,7 @@
 
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อ-ชื่อเล่น ผู้ลา *</label>
-          <select id="empName" required
-            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+          <select id="empName" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white">
             <option value="" disabled selected>-- กรุณาเลือกชื่อ --</option>
             <option value="กุสุมา ไชยโชติ (พัท)">กุสุมา ไชยโชติ (พัท)</option>
             <option value="ภัทราภรณ์ หุ่นดี (รุ้ง)">ภัทราภรณ์ หุ่นดี (รุ้ง)</option>
@@ -108,25 +107,25 @@
           <label class="block text-sm font-medium text-slate-700 mb-2">ประเภทการลา *</label>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <label class="cursor-pointer">
-              <input type="radio" name="leaveType" value="ลากิจ" class="peer sr-only" checked onchange="handleLeaveTypeChange()">
+              <input type="radio" name="leaveType" value="ลากิจ" class="peer sr-only" checked onchange="toggleTimeBox()">
               <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 transition">
                 💼 ลากิจ
               </div>
             </label>
             <label class="cursor-pointer">
-              <input type="radio" name="leaveType" value="ลาพักร้อน" class="peer sr-only" onchange="handleLeaveTypeChange()">
+              <input type="radio" name="leaveType" value="ลาพักร้อน" class="peer sr-only" onchange="toggleTimeBox()">
               <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 transition">
                 🏖️ ลาพักร้อน
               </div>
             </label>
             <label class="cursor-pointer">
-              <input type="radio" name="leaveType" value="ลาป่วย" class="peer sr-only" onchange="handleLeaveTypeChange()">
+              <input type="radio" name="leaveType" value="ลาป่วย" class="peer sr-only" onchange="toggleTimeBox()">
               <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-rose-500 peer-checked:text-white peer-checked:border-rose-500 transition">
                 🤒 ลาป่วย
               </div>
             </label>
             <label class="cursor-pointer">
-              <input type="radio" name="leaveType" value="ลาวันเกิด" class="peer sr-only" onchange="handleLeaveTypeChange()">
+              <input type="radio" name="leaveType" value="ลาวันเกิด" class="peer sr-only" onchange="toggleTimeBox()">
               <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-purple-500 peer-checked:text-white peer-checked:border-purple-500 transition">
                 🎂 ลาวันเกิด
               </div>
@@ -134,36 +133,307 @@
           </div>
         </div>
 
-        <!-- เลือกช่วงวันที่ลา (ลาหลายวัน) -->
+        <!-- เลือกช่วงวันที่ลา -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">ตั้งแต่วันที่ *</label>
-            <input type="date" id="startDate" required
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+            <input type="date" id="startDate" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">ถึงวันที่ (กรณีลาวันเดียว ให้เลือกวันเดิม) *</label>
-            <input type="date" id="endDate" required
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+            <input type="date" id="endDate" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
           </div>
         </div>
 
-        <!-- ช่วงเวลาเฉพาะเมื่อเลือกลากิจ (09.00 - 18.00 เฉพาะนาที 00 และ 30) -->
+        <!-- ช่วงเวลาลากิจ (09.00 - 18.00 / นาที 00 และ 30) -->
         <div id="businessTimeBox" class="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 space-y-2.5">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <label class="text-sm font-medium text-amber-950">⏰ ช่วงเวลาลากิจ (09.00 - 18.00 / นาที 00, 30) *</label>
+            <label class="text-sm font-medium text-amber-950">⏰ ช่วงเวลาลากิจ (09.00 - 18.00) *</label>
             <div class="flex flex-wrap gap-1.5">
-              <button type="button" onclick="setBusinessPreset('09:00', '18:00')"
-                class="text-[11px] bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md transition">
-                ทั้งวัน (09.00-18.00)
-              </button>
-              <button type="button" onclick="setBusinessPreset('09:00', '12:00')"
-                class="text-[11px] bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md transition">
-                ครึ่งเช้า (09.00-12.00)
-              </button>
-              <button type="button" onclick="setBusinessPreset('13:00', '18:00')"
-                class="text-[11px] bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md transition">
-                ครึ่งบ่าย (13.00-18.00)
-              </button>
+              <button type="button" onclick="setTime('09','00','18','00')" class="text-[11px] bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md">ทั้งวัน (09.00-18.00)</button>
+              <button type="button" onclick="setTime('09','00','12','00')" class="text-[11px] bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md">ครึ่งเช้า (09.00-12.00)</button>
+              <button type="button" onclick="setTime('13','00','18','00')" class="text-[11px] bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md">ครึ่งบ่าย (13.00-18.00)</button>
             </div>
           </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="bg-white p-2.5 rounded-lg border border-amber-200 flex items-center justify-between gap-2">
+              <span class="text-xs text-amber-900 font-medium">ตั้งแต่</span>
+              <div class="flex items-center gap-1.5">
+                <select id="startHour" class="px-2 py-1 rounded border border-amber-300 bg-white text-sm font-medium">
+                  <option value="09">09</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                  <option value="13">13</option>
+                  <option value="14">14</option>
+                  <option value="15">15</option>
+                  <option value="16">16</option>
+                  <option value="17">17</option>
+                  <option value="18">18</option>
+                </select>
+                <span class="font-bold text-amber-900">.</span>
+                <select id="startMin" class="px-2 py-1 rounded border border-amber-300 bg-white text-sm font-medium">
+                  <option value="00">00</option>
+                  <option value="30">30</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="bg-white p-2.5 rounded-lg border border-amber-200 flex items-center justify-between gap-2">
+              <span class="text-xs text-amber-900 font-medium">ถึง</span>
+              <div class="flex items-center gap-1.5">
+                <select id="endHour" class="px-2 py-1 rounded border border-amber-300 bg-white text-sm font-medium">
+                  <option value="09">09</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                  <option value="13">13</option>
+                  <option value="14">14</option>
+                  <option value="15">15</option>
+                  <option value="16">16</option>
+                  <option value="17">17</option>
+                  <option value="18" selected>18</option>
+                </select>
+                <span class="font-bold text-amber-900">.</span>
+                <select id="endMin" class="px-2 py-1 rounded border border-amber-300 bg-white text-sm font-medium">
+                  <option value="00">00</option>
+                  <option value="30">30</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <p id="timeErrorMsg" class="hidden text-xs text-rose-600 font-medium"></p>
+        </div>
+
+        <!-- สถานะการลา -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">สถานะการลา *</label>
+          <div class="grid grid-cols-2 gap-2.5">
+            <label class="cursor-pointer">
+              <input type="radio" name="leaveStatus" value="ลาแน่นอน" class="peer sr-only" checked>
+              <div class="text-center py-2 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600 transition">
+                ✅ ลาแน่นอน (คอนเฟิร์มแล้ว)
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="leaveStatus" value="แผนลา" class="peer sr-only">
+              <div class="text-center py-2 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-indigo-500 peer-checked:text-white peer-checked:border-indigo-500 transition">
+                📌 แผนลา (รอยืนยัน)
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">เหตุผลที่ลา *</label>
+          <input type="text" id="reason" required placeholder="ระบุเหตุผลสั้นๆ เช่น ธุระส่วนตัว, หาหมอ, พักผ่อน"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+        </div>
+
+        <button type="submit" id="submitBtn"
+          class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl shadow-sm transition active:scale-[0.99]">
+          บันทึกวันลา
+        </button>
+      </form>
+    </section>
+
+    <!-- ตัวกรองและรายการแสดงผล -->
+    <section class="space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-base font-semibold text-slate-800">📋 รายการรอยืนยัน / แผนลา</h2>
+        <div class="flex flex-wrap gap-2">
+          <select id="filterPerson" onchange="renderLeaves()" class="text-sm bg-white border border-slate-300 rounded-xl px-3 py-1.5 outline-none">
+            <option value="ALL">ทุกคนทุกชื่อ</option>
+            <option value="กุสุมา ไชยโชติ (พัท)">พัท</option>
+            <option value="ภัทราภรณ์ หุ่นดี (รุ้ง)">รุ้ง</option>
+            <option value="ประไพพร กรุตรนิยม (ปู)">ปู</option>
+            <option value="อรนภา ตุ่มอ่อน (ลูกน้ำ)">ลูกน้ำ</option>
+            <option value="จิราพร พิมพ์โคตร (จิ)">จิ</option>
+            <option value="วิริยา เหล่าเขตกิจ (ใหม่)">ใหม่</option>
+            <option value="เฌอลินญ์ ยศธรเตโชพัฒน์ (เฌอ)">เฌอ</option>
+            <option value="วรกาญจน์ พรมนอก (โอ๋)">โอ๋</option>
+            <option value="เฉลิมพล คงปรีชา (ตั๊ก)">ตั๊ก</option>
+          </select>
+
+          <select id="filterType" onchange="renderLeaves()" class="text-sm bg-white border border-slate-300 rounded-xl px-3 py-1.5 outline-none">
+            <option value="ALL">ทุกประเภทการลา</option>
+            <option value="ลากิจ">ลากิจ</option>
+            <option value="ลาพักร้อน">ลาพักร้อน</option>
+            <option value="ลาป่วย">ลาป่วย</option>
+            <option value="ลาวันเกิด">ลาวันเกิด</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="leaveList" class="space-y-3">
+        <p class="text-center text-sm text-slate-400 py-8">กำลังโหลดข้อมูล...</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const FIREBASE_URL = "https://summary-leave-default-rtdb.asia-southeast1.firebasedatabase.app/leaves.json";
+    const members = [
+      'กุสุมา ไชยโชติ (พัท)',
+      'ภัทราภรณ์ หุ่นดี (รุ้ง)',
+      'ประไพพร กรุตรนิยม (ปู)',
+      'อรนภา ตุ่มอ่อน (ลูกน้ำ)',
+      'จิราพร พิมพ์โคตร (จิ)',
+      'วิริยา เหล่าเขตกิจ (ใหม่)',
+      'เฌอลินญ์ ยศธรเตโชพัฒน์ (เฌอ)',
+      'วรกาญจน์ พรมนอก (โอ๋)',
+      'เฉลิมพล คงปรีชา (ตั๊ก)'
+    ];
+
+    let allLeaves = [];
+
+    function getTodayLocal() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    }
+
+    const todayStr = getTodayLocal();
+    document.getElementById('startDate').value = todayStr;
+    document.getElementById('endDate').value = todayStr;
+
+    function setTime(sh, sm, eh, em) {
+      document.getElementById('startHour').value = sh;
+      document.getElementById('startMin').value = sm;
+      document.getElementById('endHour').value = eh;
+      document.getElementById('endMin').value = em;
+      validateTime();
+    }
+
+    function getTimeRange() {
+      const sh = document.getElementById('startHour').value;
+      const sm = document.getElementById('startMin').value;
+      const eh = document.getElementById('endHour').value;
+      const em = document.getElementById('endMin').value;
+      return {
+        startTime: sh + ':' + sm,
+        endTime: eh + ':' + em,
+        dotText: sh + '.' + sm + '-' + eh + '.' + em
+      };
+    }
+
+    function getSelectedType() {
+      const el = document.querySelector('input[name="leaveType"]:checked');
+      return el ? el.value : 'ลากิจ';
+    }
+
+    function toggleTimeBox() {
+      const box = document.getElementById('businessTimeBox');
+      if (getSelectedType() === 'ลากิจ') {
+        box.classList.remove('hidden');
+        validateTime();
+      } else {
+        box.classList.add('hidden');
+        document.getElementById('timeErrorMsg').classList.add('hidden');
+      }
+    }
+
+    function validateTime() {
+      if (getSelectedType() !== 'ลากิจ') return true;
+      const r = getTimeRange();
+      const err = document.getElementById('timeErrorMsg');
+      if (r.startTime < '09:00' || r.endTime > '18:00') {
+        err.textContent = 'ช่วงเวลาลากิจต้องอยู่ระหว่าง 09.00 - 18.00 เท่านั้น';
+        err.classList.remove('hidden');
+        return false;
+      }
+      if (r.startTime >= r.endTime) {
+        err.textContent = 'เวลาเริ่มต้นต้องน้อยกว่าเวลาสิ้นสุด';
+        err.classList.remove('hidden');
+        return false;
+      }
+      err.classList.add('hidden');
+      return true;
+    }
+
+    document.getElementById('startHour').addEventListener('change', validateTime);
+    document.getElementById('startMin').addEventListener('change', validateTime);
+    document.getElementById('endHour').addEventListener('change', validateTime);
+    document.getElementById('endMin').addEventListener('change', validateTime);
+    toggleTimeBox();
+
+    function formatThaiDate(dateStr) {
+      if (!dateStr) return "";
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      const d = Number(parts[2]);
+      const dateObj = new Date(y, m - 1, d);
+      const days = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+      const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      return 'วัน' + days[dateObj.getDay()] + 'ที่ ' + d + ' ' + months[m - 1] + ' พ.ศ. ' + (y + 543);
+    }
+
+    function countDays(start, end) {
+      const d1 = new Date(start);
+      const d2 = new Date(end);
+      const diffTime = Math.abs(d2 - d1);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      return isNaN(diffDays) || diffDays < 1 ? 1 : diffDays;
+    }
+
+    function getBadgeStyle(type) {
+      if (type === 'ลากิจ') return 'bg-amber-100 text-amber-800 border-amber-200';
+      if (type === 'ลาพักร้อน') return 'bg-sky-100 text-sky-800 border-sky-200';
+      if (type === 'ลาป่วย') return 'bg-rose-100 text-rose-800 border-rose-200';
+      if (type === 'ลาวันเกิด') return 'bg-purple-100 text-purple-800 border-purple-200';
+      return 'bg-slate-100 text-slate-800';
+    }
+
+    async function fetchLeaves() {
+      try {
+        const res = await fetch(FIREBASE_URL);
+        const data = await res.json();
+        allLeaves = data
+          ? Object.entries(data).map(([id, val]) => Object.assign({ id: id, isLocked: false }, val))
+          : [];
+        allLeaves.sort((a, b) => String(b.startDate || '').localeCompare(String(a.startDate || '')));
+        renderQuotaSummary();
+        renderLeaves();
+      } catch (err) {
+        document.getElementById('leaveList').innerHTML =
+          '<p class="text-center text-sm text-rose-500 py-6">ไม่สามารถเชื่อมต่อฐานข้อมูลได้</p>';
+      }
+    }
+
+    function renderQuotaSummary() {
+      const quotas = { 'ลากิจ': 6, 'ลาพักร้อน': 6, 'ลาป่วย': 30, 'ลาวันเกิด': 1 };
+      const usage = { 'ลากิจ': {}, 'ลาพักร้อน': {}, 'ลาป่วย': {}, 'ลาวันเกิด': {} };
+
+      Object.keys(quotas).forEach(type => {
+        members.forEach(m => { usage[type][m] = 0; });
+      });
+
+      allLeaves.forEach(item => {
+        if (item.status === 'ลาแน่นอน' && usage[item.type] && usage[item.type][item.name] !== undefined) {
+          usage[item.type][item.name] += countDays(item.startDate, item.endDate);
+        }
+      });
+
+      const buildBadge = (icon, label, used, max, bgClass, textClass, barClass) => {
+        const percent = Math.min(Math.round((used / max) * 100), 100);
+        return (
+          '<div class="' + bgClass + ' px-2.5 py-1.5 rounded-lg border border-black/5 flex flex-col justify-between">' +
+            '<div class="flex items-center justify-between gap-1 text-[11px] font-medium ' + textClass + '">' +
+              '<span>' + icon + ' ' + label + '</span>' +
+              '<span class="font-bold">' + used + '/' + max + '</span>' +
+            '</div>' +
+            '<div class="w-full bg-white/80 h-1 rounded-full overflow-hidden mt-1">' +
+              '<div class="' + barClass + ' h-full rounded-full" style="width: ' + percent + '%"></div>' +
+            '</div>' +
+          '</div>'
+        );
+      };
+
+      document.getElementById('quotaMatrix').innerHTML = members.map((name, idx) => {
+        const rowBg = idx % 2 === 0
