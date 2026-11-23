@@ -71,9 +71,7 @@
         </div>
       </div>
       
-      <div id="quotaMatrix" class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
-        <!-- รายชื่อและโควตาจะถูกสร้างที่นี่ -->
-      </div>
+      <div id="quotaMatrix" class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden"></div>
     </section>
 
     <!-- ฟอร์มบันทึก/แก้ไขวันลา -->
@@ -105,6 +103,37 @@
           </select>
         </div>
 
+        <!-- ประเภทการลา (อยู่เหนือวันที่) -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">ประเภทการลา *</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <label class="cursor-pointer">
+              <input type="radio" name="leaveType" value="ลากิจ" class="peer sr-only" checked onchange="handleLeaveTypeChange()">
+              <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 transition">
+                💼 ลากิจ
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="leaveType" value="ลาพักร้อน" class="peer sr-only" onchange="handleLeaveTypeChange()">
+              <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 transition">
+                🏖️ ลาพักร้อน
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="leaveType" value="ลาป่วย" class="peer sr-only" onchange="handleLeaveTypeChange()">
+              <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-rose-500 peer-checked:text-white peer-checked:border-rose-500 transition">
+                🤒 ลาป่วย
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="leaveType" value="ลาวันเกิด" class="peer sr-only" onchange="handleLeaveTypeChange()">
+              <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-purple-500 peer-checked:text-white peer-checked:border-purple-500 transition">
+                🎂 ลาวันเกิด
+              </div>
+            </label>
+          </div>
+        </div>
+
         <!-- เลือกช่วงวันที่ลา (ลาหลายวัน) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -119,35 +148,39 @@
           </div>
         </div>
 
-        <!-- ประเภทการลา -->
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">ประเภทการลา *</label>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <label class="cursor-pointer">
-              <input type="radio" name="leaveType" value="ลากิจ" class="peer sr-only" checked>
-              <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 transition">
-                💼 ลากิจ
-              </div>
-            </label>
-            <label class="cursor-pointer">
-              <input type="radio" name="leaveType" value="ลาพักร้อน" class="peer sr-only">
-              <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 transition">
-                🏖️ ลาพักร้อน
-              </div>
-            </label>
-            <label class="cursor-pointer">
-              <input type="radio" name="leaveType" value="ลาป่วย" class="peer sr-only">
-              <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-rose-500 peer-checked:text-white peer-checked:border-rose-500 transition">
-                🤒 ลาป่วย
-              </div>
-            </label>
-            <label class="cursor-pointer">
-              <input type="radio" name="leaveType" value="ลาวันเกิด" class="peer sr-only">
-              <div class="text-center py-2.5 px-3 rounded-xl border border-slate-200 text-sm font-medium peer-checked:bg-purple-500 peer-checked:text-white peer-checked:border-purple-500 transition">
-                🎂 ลาวันเกิด
-              </div>
-            </label>
+        <!-- ช่วงเวลาเฉพาะเมื่อเลือกลากิจ (09.00 - 18.00 เท่านั้น) -->
+        <div id="businessTimeBox" class="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <label class="text-sm font-medium text-amber-950">⏰ ช่วงเวลาลากิจ (เฉพาะ 09.00 - 18.00) *</label>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="setBusinessPreset('09:00', '18:00')"
+                class="text-[11px] bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md transition">
+                ทั้งวัน (09.00-18.00)
+              </button>
+              <button type="button" onclick="setBusinessPreset('09:00', '12:00')"
+                class="text-[11px] bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md transition">
+                ครึ่งเช้า (09.00-12.00)
+              </button>
+              <button type="button" onclick="setBusinessPreset('13:00', '18:00')"
+                class="text-[11px] bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md transition">
+                ครึ่งบ่าย (13.00-18.00)
+              </button>
+            </div>
           </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-amber-900 mb-1">ตั้งแต่เวลา</label>
+              <input type="time" id="startTime" min="09:00" max="18:00" value="09:00" onchange="validateBusinessTime()"
+                class="w-full px-3 py-2 rounded-lg border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-xs text-amber-900 mb-1">ถึงเวลา</label>
+              <input type="time" id="endTime" min="09:00" max="18:00" value="18:00" onchange="validateBusinessTime()"
+                class="w-full px-3 py-2 rounded-lg border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 outline-none text-sm">
+            </div>
+          </div>
+          <p id="timeErrorMsg" class="hidden text-xs text-rose-600 font-medium"></p>
         </div>
 
         <!-- สถานะการลา -->
@@ -187,7 +220,6 @@
       <div class="flex flex-wrap items-center justify-between gap-2">
         <h2 class="text-base font-semibold text-slate-800">📋 รายการรอยืนยัน / แผนลา</h2>
         <div class="flex flex-wrap gap-2">
-          <!-- ตัวกรองรายชื่อบุคคล -->
           <select id="filterPerson" onchange="renderLeaves()" class="text-sm bg-white border border-slate-300 rounded-xl px-3 py-1.5 outline-none">
             <option value="ALL">ทุกคนทุกชื่อ</option>
             <option value="กุสุมา ไชยโชติ (พัท)">พัท</option>
@@ -201,7 +233,6 @@
             <option value="เฉลิมพล คงปรีชา (ตั๊ก)">ตั๊ก</option>
           </select>
 
-          <!-- ตัวกรองประเภทการลา -->
           <select id="filterType" onchange="renderLeaves()" class="text-sm bg-white border border-slate-300 rounded-xl px-3 py-1.5 outline-none">
             <option value="ALL">ทุกประเภทการลา</option>
             <option value="ลากิจ">ลากิจ</option>
@@ -247,6 +278,66 @@
     const todayStr = new Date().toISOString().split('T')[0];
     document.getElementById('startDate').value = todayStr;
     document.getElementById('endDate').value = todayStr;
+
+    function getSelectedLeaveType() {
+      const checked = document.querySelector('input[name="leaveType"]:checked');
+      return checked ? checked.value : 'ลากิจ';
+    }
+
+    function handleLeaveTypeChange() {
+      const type = getSelectedLeaveType();
+      const timeBox = document.getElementById('businessTimeBox');
+      if (type === 'ลากิจ') {
+        timeBox.classList.remove('hidden');
+        validateBusinessTime();
+      } else {
+        timeBox.classList.add('hidden');
+        document.getElementById('timeErrorMsg').classList.add('hidden');
+      }
+    }
+
+    function setBusinessPreset(start, end) {
+      document.getElementById('startTime').value = start;
+      document.getElementById('endTime').value = end;
+      validateBusinessTime();
+    }
+
+    function formatDotTime(timeStr) {
+      if (!timeStr) return "";
+      return timeStr.replace(':', '.');
+    }
+
+    function validateBusinessTime() {
+      if (getSelectedLeaveType() !== 'ลากิจ') return true;
+
+      const startEl = document.getElementById('startTime');
+      const endEl = document.getElementById('endTime');
+      const errEl = document.getElementById('timeErrorMsg');
+      const start = startEl.value;
+      const end = endEl.value;
+
+      if (!start || !end) {
+        errEl.textContent = 'กรุณาเลือกเวลาเริ่มต้นและสิ้นสุด';
+        errEl.classList.remove('hidden');
+        return false;
+      }
+      if (start < '09:00' || end > '18:00') {
+        errEl.textContent = 'ช่วงเวลาลากิจต้องอยู่ระหว่าง 09.00 - 18.00 เท่านั้น';
+        errEl.classList.remove('hidden');
+        return false;
+      }
+      if (start >= end) {
+        errEl.textContent = 'เวลาเริ่มต้นต้องน้อยกว่าเวลาสิ้นสุด';
+        errEl.classList.remove('hidden');
+        return false;
+      }
+
+      errEl.classList.add('hidden');
+      return true;
+    }
+
+    // เรียกครั้งแรกตอนเปิดหน้าเว็บ (เนื่องจากค่าเริ่มต้นคือ "ลากิจ")
+    handleLeaveTypeChange();
 
     function getBadgeStyle(type) {
       const styles = {
@@ -334,6 +425,17 @@
       }).join('');
     }
 
+    function formatItemSchedule(item) {
+      const datePart = item.startDate === item.endDate
+        ? formatThaiDate(item.startDate)
+        : `ตั้งแต่ ${formatThaiDate(item.startDate)} ถึง ${formatThaiDate(item.endDate)} (${countDays(item.startDate, item.endDate)} วัน)`;
+
+      if (item.type === 'ลากิจ' && item.startTime && item.endTime) {
+        return `🗓️ ${datePart} ⏰ เวลา ${formatDotTime(item.startTime)}-${formatDotTime(item.endTime)}`;
+      }
+      return `🗓️ ${datePart}`;
+    }
+
     function renderLeaves() {
       const personFilter = document.getElementById('filterPerson').value;
       const typeFilter = document.getElementById('filterType').value;
@@ -354,10 +456,7 @@
       }
 
       listEl.innerHTML = filtered.map(item => {
-        const dateText = item.startDate === item.endDate 
-          ? `🗓️ ${formatThaiDate(item.startDate)}`
-          : `🗓️ ตั้งแต่ ${formatThaiDate(item.startDate)} ถึง ${formatThaiDate(item.endDate)} (${countDays(item.startDate, item.endDate)} วัน)`;
-        
+        const scheduleText = formatItemSchedule(item);
         const statusBadge = item.status === 'ลาแน่นอน' 
           ? `<span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">✅ ลาแน่นอน</span>`
           : `<span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">📌 แผนลา</span>`;
@@ -372,7 +471,7 @@
                 </span>
                 ${statusBadge}
               </div>
-              <p class="text-sm font-medium text-blue-700">${dateText}</p>
+              <p class="text-sm font-medium text-blue-700">${scheduleText}</p>
               <p class="text-sm text-slate-600">💬 เหตุผล: ${item.reason}</p>
             </div>
             <div class="flex items-center gap-1">
@@ -421,6 +520,10 @@
 
       const typeRadios = document.querySelectorAll('input[name="leaveType"]');
       typeRadios.forEach(r => { if (r.value === item.type) r.checked = true; });
+      handleLeaveTypeChange();
+
+      document.getElementById('startTime').value = item.startTime || '09:00';
+      document.getElementById('endTime').value = item.endTime || '18:00';
 
       const statusRadios = document.querySelectorAll('input[name="leaveStatus"]');
       statusRadios.forEach(r => { if (r.value === item.status) r.checked = true; });
@@ -437,6 +540,9 @@
       document.getElementById('leaveForm').reset();
       document.getElementById('startDate').value = todayStr;
       document.getElementById('endDate').value = todayStr;
+      document.getElementById('startTime').value = '09:00';
+      document.getElementById('endTime').value = '18:00';
+      handleLeaveTypeChange();
       document.getElementById('formTitle').textContent = '➕ แจ้งวันลาใหม่';
       document.getElementById('submitBtn').textContent = 'บันทึกวันลา';
       document.getElementById('cancelEditBtn').classList.add('hidden');
@@ -444,8 +550,11 @@
 
     document.getElementById('leaveForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (!validateBusinessTime()) return;
+
       const editId = document.getElementById('editId').value;
       const btn = document.getElementById('submitBtn');
+      const leaveType = getSelectedLeaveType();
       btn.disabled = true;
       btn.textContent = editId ? 'กำลังอัปเดต...' : 'กำลังบันทึก...';
 
@@ -453,7 +562,9 @@
         name: document.getElementById('empName').value,
         startDate: document.getElementById('startDate').value,
         endDate: document.getElementById('endDate').value,
-        type: document.querySelector('input[name="leaveType"]:checked').value,
+        type: leaveType,
+        startTime: leaveType === 'ลากิจ' ? document.getElementById('startTime').value : null,
+        endTime: leaveType === 'ลากิจ' ? document.getElementById('endTime').value : null,
         status: document.querySelector('input[name="leaveStatus"]:checked').value,
         reason: document.getElementById('reason').value.trim(),
         isLocked: false,
@@ -490,8 +601,13 @@
       const visibleLeaves = allLeaves.filter(item => !item.isLocked);
       if (visibleLeaves.length === 0) return alert('ไม่มีรายการรอยืนยันสำหรับคัดลอก');
       const lines = visibleLeaves.slice(0, 15).map((item, idx) => {
-        const dText = item.startDate === item.endDate ? formatThaiDate(item.startDate) : `${formatThaiDate(item.startDate)} ถึง ${formatThaiDate(item.endDate)}`;
-        return `${idx + 1}. ${item.name} (${item.type} - ${item.status})\n   📅 ${dText}\n   💬 เหตุผล: ${item.reason}`;
+        const timeText = (item.type === 'ลากิจ' && item.startTime && item.endTime)
+          ? ` (${formatDotTime(item.startTime)}-${formatDotTime(item.endTime)})`
+          : '';
+        const dText = item.startDate === item.endDate
+          ? formatThaiDate(item.startDate)
+          : `${formatThaiDate(item.startDate)} ถึง ${formatThaiDate(item.endDate)}`;
+        return `${idx + 1}. ${item.name} (${item.type}${timeText} - ${item.status})\n   📅 ${dText}\n   💬 เหตุผล: ${item.reason}`;
       });
       const text = `📌 อัปเดตรายการวันลาทีม (รอยืนยัน)\n------------------\n${lines.join('\n\n')}`;
       navigator.clipboard.writeText(text).then(() => {
@@ -502,12 +618,15 @@
     function exportToExcel() {
       if (allLeaves.length === 0) return alert('ยังไม่มีข้อมูลสำหรับดาวน์โหลด');
       
-      let csv = '\uFEFFลำดับ,ชื่อ-นามสกุล,ประเภทการลา,สถานะ,การยืนยัน,ตั้งแต่วันที่,ถึงวันที่,จำนวนวัน,เหตุผล\n';
+      let csv = '\uFEFFลำดับ,ชื่อ-นามสกุล,ประเภทการลา,ช่วงเวลา,สถานะ,การยืนยัน,ตั้งแต่วันที่,ถึงวันที่,จำนวนวัน,เหตุผล\n';
       
       allLeaves.forEach((item, index) => {
         const daysCount = countDays(item.startDate, item.endDate);
         const lockStatus = item.isLocked ? 'ยืนยันแล้ว (ล็อก)' : 'รอยืนยัน / แผนลา';
-        csv += `${index + 1},"${item.name}","${item.type}","${item.status}","${lockStatus}","${item.startDate}","${item.endDate}",${daysCount},"${item.reason}"\n`;
+        const timeRange = (item.type === 'ลากิจ' && item.startTime && item.endTime)
+          ? `${formatDotTime(item.startTime)}-${formatDotTime(item.endTime)}`
+          : '-';
+        csv += `${index + 1},"${item.name}","${item.type}","${timeRange}","${item.status}","${lockStatus}","${item.startDate}","${item.endDate}",${daysCount},"${item.reason}"\n`;
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
