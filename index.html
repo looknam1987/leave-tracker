@@ -59,34 +59,20 @@
 
   <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
 
-    <!-- สรุปโควตาการลาแยกตามประเภท -->
-    <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-      <h2 class="text-base font-semibold text-slate-800">📊 สรุปโควตาวันลาคงเหลือของทีม</h2>
+    <!-- สรุปโควตาการลาแบบกระชับ 1 แถวต่อ 1 คน -->
+    <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-base font-semibold text-slate-800">📊 สรุปโควตาวันลาคงเหลือของทีม</h2>
+        <div class="flex flex-wrap gap-2 text-[11px] font-medium">
+          <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800">💼 ลากิจ (6)</span>
+          <span class="px-2 py-0.5 rounded bg-sky-100 text-sky-800">🏖️ พักร้อน (6)</span>
+          <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800">🤒 ลาป่วย (30)</span>
+          <span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800">🎂 วันเกิด (1)</span>
+        </div>
+      </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- ลากิจ -->
-        <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-3">
-          <h3 class="font-bold text-amber-900 text-sm flex items-center gap-1.5">💼 โควตา "ลากิจ" (สูงสุด 6 วัน)</h3>
-          <div id="quotaBusiness" class="space-y-2"></div>
-        </div>
-
-        <!-- ลาพักร้อน -->
-        <div class="bg-sky-50/50 p-4 rounded-xl border border-sky-200 space-y-3">
-          <h3 class="font-bold text-sky-900 text-sm flex items-center gap-1.5">🏖️ โควตา "ลาพักร้อน" (สูงสุด 6 วัน)</h3>
-          <div id="quotaVacation" class="space-y-2"></div>
-        </div>
-
-        <!-- ลาป่วย -->
-        <div class="bg-rose-50/50 p-4 rounded-xl border border-rose-200 space-y-3">
-          <h3 class="font-bold text-rose-900 text-sm flex items-center gap-1.5">🤒 โควตา "ลาป่วย" (สูงสุด 30 วัน)</h3>
-          <div id="quotaSick" class="space-y-2"></div>
-        </div>
-
-        <!-- ลาวันเกิด -->
-        <div class="bg-purple-50/50 p-4 rounded-xl border border-purple-200 space-y-3">
-          <h3 class="font-bold text-purple-900 text-sm flex items-center gap-1.5">🎂 โควตา "ลาวันเกิด" (สูงสุด 1 วัน)</h3>
-          <div id="quotaBirthday" class="space-y-2"></div>
-        </div>
+      <div id="quotaMatrix" class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
+        <!-- รายชื่อและโควตาจะถูกสร้างที่นี่ -->
       </div>
     </section>
 
@@ -314,28 +300,38 @@
         }
       });
 
-      const generateList = (type, maxQuota, colorClass) => {
-        return members.map(name => {
-          const used = usage[type][name];
-          const percent = Math.min(Math.round((used / maxQuota) * 100), 100);
-          return `
-            <div class="bg-white p-2.5 rounded-lg border border-slate-100 space-y-1">
-              <div class="flex justify-between items-center text-xs font-semibold">
-                <span class="text-slate-800">${name}</span>
-                <span class="text-slate-600">${used}/${maxQuota} วัน</span>
-              </div>
-              <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                <div class="${colorClass} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
-              </div>
+      const buildBadge = (icon, label, used, max, bgClass, textClass, barClass) => {
+        const percent = Math.min(Math.round((used / max) * 100), 100);
+        const isFull = used >= max;
+        return `
+          <div class="${bgClass} px-2.5 py-1.5 rounded-lg border border-black/5 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1 text-[11px] font-medium ${textClass}">
+              <span>${icon} ${label}</span>
+              <span class="font-bold ${isFull ? 'underline' : ''}">${used}/${max}</span>
             </div>
-          `;
-        }).join('');
+            <div class="w-full bg-white/80 h-1 rounded-full overflow-hidden mt-1">
+              <div class="${barClass} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+            </div>
+          </div>
+        `;
       };
 
-      document.getElementById('quotaBusiness').innerHTML = generateList('ลากิจ', 6, 'bg-amber-500');
-      document.getElementById('quotaVacation').innerHTML = generateList('ลาพักร้อน', 6, 'bg-sky-500');
-      document.getElementById('quotaSick').innerHTML = generateList('ลาป่วย', 30, 'bg-rose-500');
-      document.getElementById('quotaBirthday').innerHTML = generateList('ลาวันเกิด', 1, 'bg-purple-500');
+      document.getElementById('quotaMatrix').innerHTML = members.map((name, idx) => {
+        const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
+        return `
+          <div class="${rowBg} p-3 flex flex-col md:flex-row md:items-center justify-between gap-2.5 hover:bg-slate-50 transition">
+            <div class="font-semibold text-sm text-slate-800 md:w-56 shrink-0">
+              ${name}
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1">
+              ${buildBadge('💼', 'ลากิจ', usage['ลากิจ'][name], 6, 'bg-amber-50', 'text-amber-900', 'bg-amber-500')}
+              ${buildBadge('🏖️', 'พักร้อน', usage['ลาพักร้อน'][name], 6, 'bg-sky-50', 'text-sky-900', 'bg-sky-500')}
+              ${buildBadge('🤒', 'ลาป่วย', usage['ลาป่วย'][name], 30, 'bg-rose-50', 'text-rose-900', 'bg-rose-500')}
+              ${buildBadge('🎂', 'วันเกิด', usage['ลาวันเกิด'][name], 1, 'bg-purple-50', 'text-purple-900', 'bg-purple-500')}
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     function renderLeaves() {
@@ -343,7 +339,6 @@
       const typeFilter = document.getElementById('filterType').value;
       const listEl = document.getElementById('leaveList');
 
-      // กรองเอาเฉพาะรายการที่ยังไม่ถูกล็อก (isLocked เป็น false หรือ undefined) ออกมาแสดง
       let filtered = allLeaves.filter(item => !item.isLocked);
 
       if (personFilter !== 'ALL') {
@@ -399,7 +394,6 @@
       }).join('');
     }
 
-    // ฟังก์ชันกด "ยืนยัน" เพื่อบันทึกสถานะล็อกไปยัง Firebase
     async function confirmAndLock(id) {
       if (!confirm('ยืนยันรายการนี้ใช่ไหม? เมื่อยืนยันแล้ว รายการจะถูกซ่อนจากหน้าจอหลัก (แต่ยังเก็บไว้ในระบบสำหรับ export รายงาน)')) return;
 
@@ -493,7 +487,6 @@
     }
 
     function copySummary() {
-      // คัดลอกเฉพาะรายการที่ยังไม่ยืนยัน (หรือจะเลือกทั้งหมดก็ได้ ตรงนี้ดึงจากรายการที่แสดงอยู่)
       const visibleLeaves = allLeaves.filter(item => !item.isLocked);
       if (visibleLeaves.length === 0) return alert('ไม่มีรายการรอยืนยันสำหรับคัดลอก');
       const lines = visibleLeaves.slice(0, 15).map((item, idx) => {
@@ -509,7 +502,6 @@
     function exportToExcel() {
       if (allLeaves.length === 0) return alert('ยังไม่มีข้อมูลสำหรับดาวน์โหลด');
       
-      // ส่งออกข้อมูลทั้งหมด (รวมทั้งที่ยืนยันแล้วและยังไม่ยืนยัน เพื่อทำรายงานภาพรวม)
       let csv = '\uFEFFลำดับ,ชื่อ-นามสกุล,ประเภทการลา,สถานะ,การยืนยัน,ตั้งแต่วันที่,ถึงวันที่,จำนวนวัน,เหตุผล\n';
       
       allLeaves.forEach((item, index) => {
